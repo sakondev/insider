@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Insider Game</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Kanit", sans-serif;
+        touch-action: manipulation;
+      }
+      .card {
+        perspective: 1000px;
+      }
+      .card-inner {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        transition: transform 0.6s;
+        transform-style: preserve-3d;
+      }
+      .card.flipped .card-inner {
+        transform: rotateY(180deg);
+      }
+      .card-face {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        -webkit-backface-visibility: hidden;
+        backface-visibility: hidden;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        border-radius: 1.5rem;
+      }
+      .card-back {
+        transform: rotateY(180deg);
+      }
+      .screen {
+        display: none;
+      }
+      .screen.active {
+        display: flex;
+      }
+      @keyframes pulse {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.05);
+        }
+      }
+      .timer-pulse {
+        animation: pulse 1s infinite;
+      }
+    </style>
+  </head>
+  <body
+    class="bg-gray-900 text-white min-h-screen flex items-center justify-center p-4"
+  >
+    <!-- Container หลักของแอป -->
+    <div id="app-container" class="w-full max-w-md mx-auto">
+      <!-- 1. หน้าจอตั้งค่าเกม -->
+      <div
+        id="setup-screen"
+        class="screen active flex-col items-center justify-center space-y-4 p-6 bg-gray-800 rounded-2xl shadow-lg"
+      >
+        <h1 class="text-4xl font-bold text-center">Insider Game</h1>
+        <p class="text-gray-300 text-center">เวอร์ชัน classic</p>
+
+        <div class="w-full">
+          <label class="block mb-2 text-lg text-center"
+            >1. เลือกจำนวนผู้เล่น</label
+          >
+          <div class="grid grid-cols-3 gap-3">
+            <button
+              onclick="setPlayerCount(4)"
+              class="player-count-btn text-xl bg-indigo-600 hover:bg-indigo-700 p-4 rounded-lg"
+            >
+              4
+            </button>
+            <button
+              onclick="setPlayerCount(5)"
+              class="player-count-btn text-xl bg-indigo-600 hover:bg-indigo-700 p-4 rounded-lg"
+            >
+              5
+            </button>
+            <button
+              onclick="setPlayerCount(6)"
+              class="player-count-btn text-xl bg-indigo-600 hover:bg-indigo-700 p-4 rounded-lg"
+            >
+              6
+            </button>
+            <button
+              onclick="setPlayerCount(7)"
+              class="player-count-btn text-xl bg-indigo-600 hover:bg-indigo-700 p-4 rounded-lg"
+            >
+              7
+            </button>
+            <button
+              onclick="setPlayerCount(8)"
+              class="player-count-btn text-xl bg-indigo-600 hover:bg-indigo-700 p-4 rounded-lg"
+            >
+              8
+            </button>
+            <button
+              onclick="setPlayerCount(9)"
+              class="player-count-btn text-xl bg-indigo-600 hover:bg-indigo-700 p-4 rounded-lg"
+            >
+              9
+            </button>
+            <button
+              onclick="setPlayerCount(10)"
+              class="player-count-btn text-xl bg-indigo-600 hover:bg-indigo-700 p-4 rounded-lg"
+            >
+              10
+            </button>
+            <button
+              onclick="setPlayerCount(11)"
+              class="player-count-btn text-xl bg-indigo-600 hover:bg-indigo-700 p-4 rounded-lg"
+            >
+              11
+            </button>
+            <button
+              onclick="setPlayerCount(12)"
+              class="player-count-btn text-xl bg-indigo-600 hover:bg-indigo-700 p-4 rounded-lg"
+            >
+              12
+            </button>
+          </div>
+          <p id="player-count-display" class="text-center mt-2 text-lg h-6"></p>
+        </div>
+
+        <div class="w-full">
+          <label class="block mb-2 text-lg text-center"
+            >2. เลือกหมวดหมู่คำศัพท์</label
+          >
+          <div id="category-buttons" class="grid grid-cols-2 gap-3">
+            <!-- หมวดหมู่จะถูกสร้างขึ้นโดย Javascript -->
+          </div>
+          <p id="category-display" class="text-center mt-2 text-lg h-6"></p>
+        </div>
+
+        <button
+          id="start-game-btn"
+          onclick="startGame()"
+          class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-6 rounded-lg text-2xl transition duration-300 disabled:bg-gray-500"
+          disabled
+        >
+          สร้างเกม
+        </button>
+      </div>
+
+      <!-- หน้าจอแจกบทบาท -->
+      <div
+        id="reveal-screen"
+        class="screen flex-col items-center justify-center space-y-4 text-center"
+      >
+        <h2 id="reveal-title" class="text-3xl font-bold">
+          ตาของผู้เล่นคนที่ 1
+        </h2>
+        <p id="reveal-instruction" class="text-gray-300">
+          ส่งมือถือให้ผู้เล่นคนที่ 1 แล้วแตะที่การ์ดเพื่อดูบทบาท
+        </p>
+        <div
+          id="role-card"
+          class="card w-full h-80 cursor-pointer"
+          onclick="flipCard()"
+        >
+          <div class="card-inner">
+            <div class="card-face bg-gray-700">
+              <span class="text-9xl">?</span>
+              <p class="mt-4 text-xl">แตะเพื่อเปิด</p>
+            </div>
+            <div id="role-card-back" class="card-face card-back">
+              <p class="text-xl mb-2">คุณคือ...</p>
+              <h3 id="role-name" class="text-5xl font-bold"></h3>
+              <p
+                id="secret-word-display"
+                class="mt-6 text-4xl bg-black bg-opacity-20 px-4 py-2 rounded-lg"
+              ></p>
+              <p class="absolute bottom-6 text-gray-200 text-lg">
+                แตะอีกครั้งเพื่อปิด
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- หน้าจอ Moderator -->
+      <div
+        id="moderator-screen"
+        class="screen flex-col items-center justify-center space-y-6 text-center p-6 bg-purple-900 rounded-2xl shadow-lg"
+      >
+        <h2 class="text-4xl font-bold">สำหรับ Moderator</h2>
+        <p class="text-purple-200 text-xl">คำศัพท์ในรอบนี้คือ:</p>
+        <div id="moderator-word-container" class="w-full text-center">
+          <button
+            id="moderator-reveal-btn"
+            onclick="revealModeratorWord()"
+            class="w-full text-2xl bg-gray-700 hover:bg-gray-600 p-6 rounded-lg"
+          >
+            [ แตะเพื่อดูคำศัพท์ ]
+          </button>
+          <p
+            id="moderator-word"
+            class="hidden mt-2 text-5xl font-bold bg-black bg-opacity-30 px-6 py-3 rounded-xl"
+          ></p>
+        </div>
+        <p class="text-purple-200 mt-4">
+          เมื่อทุกคนพร้อมแล้ว กดปุ่มเพื่อเริ่มจับเวลา
+        </p>
+        <button
+          onclick="startTimer()"
+          class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-6 rounded-lg text-2xl transition duration-300"
+        >
+          เริ่มจับเวลา 5 นาที
+        </button>
+      </div>
+
+      <!-- หน้าจอจับเวลาหลัก -->
+      <div
+        id="timer-screen"
+        class="screen flex-col items-center justify-center space-y-8 text-center"
+      >
+        <h2 class="text-3xl font-bold">เริ่มถาม-ตอบได้!</h2>
+        <div id="timer-display" class="text-9xl font-bold">05:00</div>
+        <p class="text-gray-300">เป้าหมาย: หาคำศัพท์ลับให้เจอ</p>
+        <button
+          onclick="endTimerEarly()"
+          class="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-4 px-6 rounded-lg text-2xl transition duration-300"
+        >
+          ทายคำศัพท์ได้แล้ว (จบก่อนเวลา)
+        </button>
+      </div>
+
+      <!-- หน้าจอถกเถียง -->
+      <div
+        id="discussion-screen"
+        class="screen flex-col items-center justify-center space-y-8 text-center"
+      >
+        <h2 class="text-4xl font-bold">ถกเถียงหา Insider!</h2>
+        <div id="discussion-timer-display" class="text-9xl font-bold">
+          01:00
+        </div>
+        <p class="text-gray-300">คุณมีเวลา 1 นาทีในการพูดคุยหาตัว Insider</p>
+        <button
+          onclick="endDiscussionEarly()"
+          class="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-4 px-6 rounded-lg text-2xl transition duration-300"
+        >
+          จบการถกเถียง
+        </button>
+      </div>
+
+      <!-- หน้าจอโหวต -->
+      <div
+        id="vote-screen"
+        class="screen flex-col items-center justify-center space-y-6 text-center"
+      >
+        <h2 class="text-4xl font-bold">เริ่มโหวต!</h2>
+        <p class="text-gray-300 text-xl">โหวตหาคนที่คุณคิดว่าเป็น Insider</p>
+        <div id="vote-buttons" class="grid grid-cols-3 gap-3 w-full"></div>
+        <button
+          onclick="showResults()"
+          class="mt-6 w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-6 rounded-lg text-2xl transition duration-300"
+        >
+          ดูผลลัพธ์
+        </button>
+      </div>
+
+      <!-- หน้าจอผลลัพธ์ -->
+      <div
+        id="results-screen"
+        class="screen flex-col items-center justify-center space-y-6 text-center p-6 bg-gray-800 rounded-2xl shadow-lg"
+      >
+        <h2 id="result-title" class="text-4xl font-bold">ผลการโหวต</h2>
+        <div class="space-y-4 text-2xl">
+          <p>
+            คำศัพท์คือ:
+            <span id="final-word" class="font-bold text-yellow-400"></span>
+          </p>
+          <p>
+            Insider คือ:
+            <span id="insider-reveal" class="font-bold text-red-500"></span>
+          </p>
+          <p>ผลลัพธ์: <span id="final-result" class="font-bold"></span></p>
+        </div>
+        <button
+          onclick="restartGame()"
+          class="mt-6 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-6 rounded-lg text-2xl transition duration-300"
+        >
+          เล่นอีกครั้ง
+        </button>
+      </div>
+    </div>
+
+    <script>
+      let wordData = {};
+
+      fetch("list.json")
+        .then((response) => response.json())
+        .then((data) => {
+          wordData = data;
+          populateCategories(); // Populate categories after data is loaded
+        })
+        .catch((error) => console.error("Error loading word data:", error));
+
+      // --- ตัวแปรสถานะเกม ---
+      let gameState = {
+        playerCount: 0,
+        category: "",
+        secretWord: "",
+        insiderIndex: -1,
+        currentPlayerIndex: 0,
+        timerId: null,
+        timeLeft: 300,
+        votes: [],
+        discussionTimerId: null,
+      };
+
+      // --- DOM Elements ---
+      const screens = document.querySelectorAll(".screen");
+      const roleCard = document.getElementById("role-card");
+      const roleName = document.getElementById("role-name");
+      const secretWordDisplay = document.getElementById("secret-word-display");
+      const roleCardBack = document.getElementById("role-card-back");
+      const startGameBtn = document.getElementById("start-game-btn");
+
+      // --- ฟังก์ชันจัดการ UI ---
+      function showScreen(screenId) {
+        screens.forEach((screen) => screen.classList.remove("active"));
+        document.getElementById(screenId).classList.add("active");
+      }
+
+      function checkCanStart() {
+        if (gameState.playerCount > 0 && gameState.category) {
+          startGameBtn.disabled = false;
+          startGameBtn.textContent = "สร้างเกม";
+        } else {
+          startGameBtn.disabled = true;
+        }
+      }
+
+      function setPlayerCount(count) {
+        gameState.playerCount = count;
+        document
+          .querySelectorAll(".player-count-btn")
+          .forEach((btn) =>
+            btn.classList.remove("bg-green-500", "ring-2", "ring-white")
+          );
+        const selectedBtn = Array.from(
+          document.querySelectorAll(".player-count-btn")
+        ).find((btn) => parseInt(btn.textContent) === count);
+        if (selectedBtn)
+          selectedBtn.classList.add("bg-green-500", "ring-2", "ring-white");
+        document.getElementById(
+          "player-count-display"
+        ).textContent = `ผู้เล่น: ${count} คน`;
+        checkCanStart();
+      }
+
+      function setCategory(category) {
+        gameState.category = category;
+        document
+          .querySelectorAll(".category-btn")
+          .forEach((btn) =>
+            btn.classList.remove("bg-green-500", "ring-2", "ring-white")
+          );
+        const allCategoryBtns = document.querySelectorAll(".category-btn");
+        const selectedBtn = Array.from(allCategoryBtns).find(
+          (btn) => btn.textContent === category
+        );
+        if (selectedBtn)
+          selectedBtn.classList.add("bg-green-500", "ring-2", "ring-white");
+        document.getElementById(
+          "category-display"
+        ).textContent = `หมวดหมู่: ${category}`;
+        checkCanStart();
+      }
+
+      function populateCategories() {
+        const container = document.getElementById("category-buttons");
+        container.innerHTML = "";
+        const categories = Object.keys(wordData);
+        categories.forEach((category) => {
+          const button = document.createElement("button");
+          button.textContent = category;
+          button.className =
+            "category-btn text-lg bg-teal-600 hover:bg-teal-700 p-3 rounded-lg";
+          button.onclick = () => setCategory(category);
+          container.appendChild(button);
+        });
+      }
+
+      // --- ฟังก์ชันหลักของเกม ---
+      function startGame() {
+        if (!gameState.category || !wordData[gameState.category]) {
+          console.error("Category not set or invalid");
+          return;
+        }
+        const wordsInCategory = wordData[gameState.category];
+        const randomIndex = Math.floor(Math.random() * wordsInCategory.length);
+        const word = wordsInCategory[randomIndex];
+
+        gameState.secretWord = word;
+        gameState.insiderIndex = Math.floor(
+          Math.random() * gameState.playerCount
+        );
+        gameState.currentPlayerIndex = 0;
+        gameState.votes = Array(gameState.playerCount).fill(0);
+        setupRevealScreen();
+        showScreen("reveal-screen");
+      }
+
+      function setupRevealScreen() {
+        document.getElementById(
+          "reveal-title"
+        ).textContent = `ตาของผู้เล่นคนที่ ${gameState.currentPlayerIndex + 1}`;
+        document.getElementById(
+          "reveal-instruction"
+        ).textContent = `ส่งมือถือให้ผู้เล่นคนที่ ${
+          gameState.currentPlayerIndex + 1
+        } แล้วแตะที่การ์ดเพื่อดูบทบาท`;
+        roleCard.classList.remove("flipped");
+      }
+
+      function flipCard() {
+        if (roleCard.classList.contains("flipped")) {
+          // UX Improvement: Immediately go to the next player without delay or message.
+          nextPlayer();
+        } else {
+          const isInsider =
+            gameState.currentPlayerIndex === gameState.insiderIndex;
+          if (isInsider) {
+            roleName.textContent = "Insider";
+            secretWordDisplay.textContent = gameState.secretWord;
+            secretWordDisplay.style.display = "block";
+            roleCardBack.className = "card-face card-back bg-red-600";
+          } else {
+            roleName.textContent = "คนธรรมดา";
+            secretWordDisplay.style.display = "none";
+            roleCardBack.className = "card-face card-back bg-green-600";
+          }
+          roleCard.classList.add("flipped");
+        }
+      }
+
+      function nextPlayer() {
+        gameState.currentPlayerIndex++;
+        if (gameState.currentPlayerIndex < gameState.playerCount) {
+          setupRevealScreen();
+        } else {
+          document.getElementById("moderator-reveal-btn").style.display =
+            "block";
+          const wordEl = document.getElementById("moderator-word");
+          wordEl.classList.add("hidden");
+          wordEl.textContent = gameState.secretWord;
+          showScreen("moderator-screen");
+        }
+      }
+
+      function revealModeratorWord() {
+        document.getElementById("moderator-reveal-btn").style.display = "none";
+        document.getElementById("moderator-word").classList.remove("hidden");
+      }
+
+      function startTimer() {
+        gameState.timeLeft = 300;
+        const timerDisplay = document.getElementById("timer-display");
+        timerDisplay.classList.remove("timer-pulse", "text-red-500");
+        function updateTimer() {
+          const minutes = Math.floor(gameState.timeLeft / 60)
+            .toString()
+            .padStart(2, "0");
+          const seconds = (gameState.timeLeft % 60).toString().padStart(2, "0");
+          timerDisplay.textContent = `${minutes}:${seconds}`;
+          if (gameState.timeLeft <= 10 && gameState.timeLeft > 0) {
+            timerDisplay.classList.add("timer-pulse", "text-red-500");
+          }
+          if (gameState.timeLeft > 0) {
+            gameState.timeLeft--;
+          } else {
+            clearInterval(gameState.timerId);
+            startDiscussionTimer();
+          }
+        }
+        updateTimer();
+        gameState.timerId = setInterval(updateTimer, 1000);
+        showScreen("timer-screen");
+      }
+
+      function endTimerEarly() {
+        clearInterval(gameState.timerId);
+        startDiscussionTimer();
+      }
+
+      function endDiscussionEarly() {
+        clearInterval(gameState.discussionTimerId);
+        goToVoteScreen();
+      }
+
+      function startDiscussionTimer() {
+        showScreen("discussion-screen");
+        let time = 60;
+        const timerDisplay = document.getElementById(
+          "discussion-timer-display"
+        );
+        timerDisplay.classList.remove("timer-pulse", "text-red-500");
+        const update = () => {
+          const minutes = Math.floor(time / 60)
+            .toString()
+            .padStart(2, "0");
+          const seconds = (time % 60).toString().padStart(2, "0");
+          timerDisplay.textContent = `${minutes}:${seconds}`;
+          if (time <= 10 && time > 0)
+            timerDisplay.classList.add("timer-pulse", "text-red-500");
+          if (time > 0) {
+            time--;
+          } else {
+            clearInterval(gameState.discussionTimerId);
+            goToVoteScreen();
+          }
+        };
+        update();
+        gameState.discussionTimerId = setInterval(update, 1000);
+      }
+
+      function goToVoteScreen() {
+        const voteButtonsContainer = document.getElementById("vote-buttons");
+        voteButtonsContainer.innerHTML = "";
+        for (let i = 0; i < gameState.playerCount; i++) {
+          const button = document.createElement("button");
+          button.textContent = `ผู้เล่น ${i + 1}`;
+          button.className =
+            "vote-btn text-xl bg-indigo-600 hover:bg-indigo-700 p-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-white";
+          button.onclick = () => castVote(i);
+          voteButtonsContainer.appendChild(button);
+        }
+        showScreen("vote-screen");
+      }
+      function castVote(playerIndex) {
+        const buttons = document.querySelectorAll(".vote-btn");
+        const targetButton = buttons[playerIndex];
+        if (targetButton.classList.contains("bg-yellow-500")) {
+          targetButton.classList.remove("bg-yellow-500", "text-black");
+          targetButton.classList.add("bg-indigo-600");
+        } else {
+          targetButton.classList.add("bg-yellow-500", "text-black");
+          targetButton.classList.remove("bg-indigo-600");
+        }
+      }
+      function showResults() {
+        gameState.votes = Array(gameState.playerCount).fill(0);
+        const buttons = document.querySelectorAll(".vote-btn");
+        buttons.forEach((btn, index) => {
+          if (btn.classList.contains("bg-yellow-500")) {
+            gameState.votes[index]++;
+          }
+        });
+        const maxVotes = Math.max(...gameState.votes);
+        const votedPlayerIndices = [];
+        gameState.votes.forEach((voteCount, index) => {
+          if (voteCount === maxVotes && maxVotes > 0) {
+            votedPlayerIndices.push(index);
+          }
+        });
+        let resultText = "";
+        if (votedPlayerIndices.includes(gameState.insiderIndex)) {
+          resultText = "โหวตถูกต้อง! คนธรรมดาชนะ";
+          document.getElementById("result-title").textContent =
+            "🎉 ยินดีด้วย! 🎉";
+          document.getElementById("final-result").className =
+            "font-bold text-green-400";
+        } else {
+          resultText = "โหวตผิด! Insider ชนะ";
+          document.getElementById("result-title").textContent =
+            "😥 เสียใจด้วยนะ 😥";
+          document.getElementById("final-result").className =
+            "font-bold text-red-400";
+        }
+        if (votedPlayerIndices.length === 0) {
+          resultText = "ไม่มีการโหวต! Insider ชนะ";
+          document.getElementById("result-title").textContent =
+            "😥 เสียใจด้วยนะ 😥";
+          document.getElementById("final-result").className =
+            "font-bold text-red-400";
+        }
+        document.getElementById("final-word").textContent =
+          gameState.secretWord;
+        document.getElementById("insider-reveal").textContent = `ผู้เล่น ${
+          gameState.insiderIndex + 1
+        }`;
+        document.getElementById("final-result").textContent = resultText;
+        showScreen("results-screen");
+      }
+      function restartGame() {
+        gameState.playerCount = 0;
+        gameState.category = "";
+        gameState.secretWord = "";
+        if (gameState.timerId) clearInterval(gameState.timerId);
+        if (gameState.discussionTimerId)
+          clearInterval(gameState.discussionTimerId);
+        document.getElementById("player-count-display").textContent = "";
+        document.getElementById("category-display").textContent = "";
+        document
+          .querySelectorAll(".player-count-btn")
+          .forEach((btn) =>
+            btn.classList.remove("bg-green-500", "ring-2", "ring-white")
+          );
+        populateCategories();
+        startGameBtn.disabled = true;
+        startGameBtn.textContent = "สร้างเกม";
+        showScreen("setup-screen");
+      }
+
+      // เริ่มต้นสร้างปุ่มหมวดหมู่เมื่อโหลดหน้า
+      populateCategories();
+    </script>
+  </body>
+</html>
