@@ -74,8 +74,9 @@
         id="setup-screen"
         class="screen active flex-col items-center justify-center space-y-4 p-6 bg-gray-800 rounded-2xl shadow-lg"
       >
-        <h1 class="text-4xl font-bold text-center">Insider Game</h1>
-        <p class="text-gray-300 text-center">เวอร์ชัน classic</p>
+        <h1 class="text-6xl font-bold text-center text-red-500 mb-2">
+          INSIDER
+        </h1>
 
         <div class="w-full">
           <label class="block mb-2 text-lg text-center"
@@ -441,7 +442,7 @@
           const isInsider =
             gameState.currentPlayerIndex === gameState.insiderIndex;
           if (isInsider) {
-            roleName.textContent = "Insider";
+            roleName.textContent = "INSIDER";
             secretWordDisplay.textContent = gameState.secretWord;
             secretWordDisplay.style.display = "block";
             roleCardBack.className = "card-face card-back bg-red-600";
